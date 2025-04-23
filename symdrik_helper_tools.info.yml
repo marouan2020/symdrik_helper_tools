@@ -1,0 +1,5 @@
+name: Symdrik helper tools
+description: 'This package allows applications to call helper functions that are loaded dynamically.'
+package:  Symdrik tools
+type:  module
+core_version_requirement: ^9.3 || ^10

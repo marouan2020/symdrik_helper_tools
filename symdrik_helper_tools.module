@@ -1,0 +1,68 @@
+<?php
+
+define("KEYLOAK_TEXT_SUBJECT", "Welcome Astore Company");
+define("KEYLOAK_TEXT_HEADER", "Welcome Astore Company");
+define("KEYLOAK_TEXT_VISIT_SUPPLIER_DIRECTORY", "VISIT SUPPLIER DIRECTORY");
+define("KEYLOAK_TEXT_CUSTOM_SUPPORT", "Customer support");
+define("KEYLOAK_TEXT_CONTENT_MESSAGE", "Welcome to Astore Company. You have also access to our supplier directory where you'll find a lot of useful information like price lists, contacts to order, etc.");
+
+/**
+ * Implements hook_mail().
+ */
+function symdrik_helper_tools_mail($key, &$message, $params) {
+  if ($key == "keyloak_notification") {
+    $systemSite = \Drupal::config('system.site');
+    $params['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed; delsp=yes';
+    $message['from'] = $systemSite->get('mail');
+    $params['headers']['Bcc'] = $systemSite->get('mail');
+    $messageBody = _symdrik_helper_tools_get_translation_text_by_langcode(KEYLOAK_TEXT_CONTENT_MESSAGE, $params['langcode']);
+    $message['subject'] = _symdrik_helper_tools_get_translation_text_by_langcode(KEYLOAK_TEXT_SUBJECT, $params['langcode']);
+    $params['text_header'] = _symdrik_helper_tools_get_translation_text_by_langcode(KEYLOAK_TEXT_HEADER, $params['langcode']);
+    $params['message'] = \Drupal\Component\Utility\Html::escape($messageBody);
+    $params['text_custom_support'] = _symdrik_helper_tools_get_translation_text_by_langcode(KEYLOAK_TEXT_CUSTOM_SUPPORT, $params['langcode']);
+    $params['visit_supplier_directory'] = _symdrik_helper_tools_get_translation_text_by_langcode(KEYLOAK_TEXT_VISIT_SUPPLIER_DIRECTORY, $params['langcode']);
+    if(!empty($params['template'])) {
+      $varaible = [
+        '#theme' => $params['template'],
+        '#submitted_data' => $params
+      ];
+      $messageBody =  \Drupal::service('renderer')->render($varaible);
+    }
+    $message['body'][] = $messageBody;
+  }
+}
+
+function _symdrik_helper_tools_get_translation_text_by_langcode($sourceString, $langcode = "en") {
+  $translationLid =  _symdrik_helper_tools_add_string_to_storage($sourceString, $langcode);
+  if(!empty($translationLid)) {
+    $connection = \Drupal\Core\Database\Database::getConnection();
+    $query = $connection->select('locales_target', 'lt');
+    $query->addField('lt', 'translation');
+    $query->condition('lid', $translationLid);
+    $query->condition('language', $langcode);
+    $results = $query->execute()->fetchAssoc();
+    if(!empty($results)) {
+      return $results['translation'];
+    }
+  }
+  return $sourceString;
+}
+
+function _symdrik_helper_tools_add_string_to_storage($sourceString,$langcode) {
+  if (empty($sourceString)) {
+    return NULL;
+  }
+  $storage = \Drupal::service('locale.storage');
+  $translation =  $storage->findTranslation(array('source' => $sourceString));
+  if(!empty($translation->lid)) {
+    return $translation->lid;
+  }
+  $string = $storage->findString(array('source' => $sourceString));
+  if (is_null($string)) {
+    $string = new \Drupal\locale\SourceString();
+    $string->setString($sourceString);
+    $string->setStorage($storage);
+    $string->save();
+    return $string->lid;
+  }
+}
