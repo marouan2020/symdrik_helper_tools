@@ -3,3 +3,8 @@ description: 'This package allows applications to call helper functions that are
 package:  Symdrik tools
 type:  module
 core_version_requirement: ^9.3 || ^10
+
+# Information added by Drupal.org packaging script on 2025-04-23
+version: '1.0.0'
+project: 'Helper tools'
+datestamp: 1736773035
